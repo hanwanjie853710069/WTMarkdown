@@ -10,5 +10,5 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '11.0'
   s.requires_arc = true
   s.source_files = 'WTMarkdown/Classes/**/*'
-  s.swift_version = "4.0"
+  s.swift_version = "5.0"
 end
