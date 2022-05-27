@@ -1,0 +1,16 @@
+PODS:
+  - WTMarkdown (0.1.0)
+
+DEPENDENCIES:
+  - WTMarkdown (from `../`)
+
+EXTERNAL SOURCES:
+  WTMarkdown:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  WTMarkdown: c3006234ecf78dddebfe4bb571476fab413d287a
+
+PODFILE CHECKSUM: 35e9cb0910b25302b85516b85eaa38a5ad634c0d
+
+COCOAPODS: 1.11.3

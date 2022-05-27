@@ -1,0 +1,13 @@
+use_frameworks!
+
+platform :ios, '9.0'
+
+target 'WTMarkdown_Example' do
+  pod 'WTMarkdown', :path => '../'
+
+  target 'WTMarkdown_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end

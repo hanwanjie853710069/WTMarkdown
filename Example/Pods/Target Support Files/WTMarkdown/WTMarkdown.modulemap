@@ -1,0 +1,6 @@
+framework module WTMarkdown {
+  umbrella header "WTMarkdown-umbrella.h"
+
+  export *
+  module * { export * }
+}

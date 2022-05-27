@@ -1,0 +1,6 @@
+framework module Pods_WTMarkdown_Example {
+  umbrella header "Pods-WTMarkdown_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}

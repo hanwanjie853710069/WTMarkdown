@@ -1,0 +1,6 @@
+framework module Pods_WTMarkdown_Tests {
+  umbrella header "Pods-WTMarkdown_Tests-umbrella.h"
+
+  export *
+  module * { export * }
+}
