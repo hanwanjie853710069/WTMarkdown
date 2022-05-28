@@ -18,9 +18,10 @@ extension OSLog {
 }
 
 public struct MardDownImageModel {
-    var path: String = ""
-    var width: CGFloat = 0
-    var height: CGFloat = 0
+    public init() { }
+    public var path: String = ""
+    public var width: CGFloat = 0
+    public var height: CGFloat = 0
 }
 
 public enum CharacterStyle: CharacterStyling {
