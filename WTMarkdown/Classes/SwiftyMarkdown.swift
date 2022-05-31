@@ -434,13 +434,14 @@ If that is not set, then the system default will be used.
 		self.tokeniser.metadataLookup = keyValuePairs
 		
 		for (idx, line) in referencesRemoved.enumerated() {
-			if idx > 0 {
-				attributedString.append(NSAttributedString(string: "\n"))
+            var addLine: Bool = false
+            if idx != referencesRemoved.count - 1 {
+                addLine = true
 			}
 			let finalTokens = self.tokeniser.process(line.line)
 			self.previouslyFoundTokens.append(contentsOf: finalTokens)
 			self.perfomanceLog.tag(with: "(tokenising complete for line \(idx)")
-            let tempAttributedString = attributedStringFor(tokens: finalTokens, in: line, blockImageUrl: blockImageUrl)
+            let tempAttributedString = attributedStringFor(tokens: finalTokens, in: line, addLine: addLine, blockImageUrl: blockImageUrl)
 			attributedString.append(tempAttributedString)
 		}
 
@@ -453,15 +454,16 @@ If that is not set, then the system default will be used.
 extension SwiftyMarkdown {
 	func attributedStringFor(tokens: [Token],
                              in line: SwiftyLine,
+                             addLine: Bool,
                              blockImageUrl: ((String) -> MardDownImageModel)? = nil) -> NSAttributedString {
 		var finalTokens = tokens
 		let finalAttributedString = NSMutableAttributedString()
 		var attributes: [NSAttributedString.Key: AnyObject] = [:]
-	
+
 		guard let markdownLineStyle = line.lineStyle as? MarkdownLineStyle else {
 			preconditionFailure("The passed line style is not a valid Markdown Line Style")
 		}
-		
+
 		var listItem = self.bullet
 		switch markdownLineStyle {
 		case .orderedList:
@@ -475,13 +477,13 @@ extension SwiftyMarkdown {
 			if markdownLineStyle == .orderedListIndentFirstOrder {
 				listItem = "\(self.orderedListIndentFirstOrderCount)."
 			}
-			
+
 		case .orderedListIndentSecondOrder, .unorderedListIndentSecondOrder:
 			self.orderedListIndentSecondOrderCount += 1
 			if markdownLineStyle == .orderedListIndentSecondOrder {
 				listItem = "\(self.orderedListIndentSecondOrderCount)."
 			}
-			
+
 		default:
 			self.orderedListCount = 0
 			self.orderedListIndentFirstOrderCount = 0
@@ -514,7 +516,7 @@ extension SwiftyMarkdown {
 			paragraphStyle.headIndent = 20.0
 			attributes[.paragraphStyle] = paragraphStyle
 		case .unorderedList, .unorderedListIndentFirstOrder, .unorderedListIndentSecondOrder, .orderedList, .orderedListIndentFirstOrder, .orderedListIndentSecondOrder:
-			
+
 			let interval: CGFloat = 30
 			var addition = interval
 			var indent = ""
@@ -528,9 +530,9 @@ extension SwiftyMarkdown {
 			default:
 				break
 			}
-			
+
 			lineProperties = body
-			
+
 			let paragraphStyle = NSMutableParagraphStyle()
 			paragraphStyle.tabStops = [NSTextTab(textAlignment: .left, location: interval, options: [:]), NSTextTab(textAlignment: .left, location: interval, options: [:])]
 			paragraphStyle.defaultTabInterval = interval
@@ -538,7 +540,7 @@ extension SwiftyMarkdown {
 
 			attributes[.paragraphStyle] = paragraphStyle
 			finalTokens.insert(Token(type: .string, inputString: "\(indent)\(listItem)\t"), at: 0)
-			
+
 		case .yaml:
 			lineProperties = body
 		case .previousH1:
@@ -550,7 +552,7 @@ extension SwiftyMarkdown {
 		case .referencedLink:
 			lineProperties = body
 		}
-		
+
         let paragraphStyle = attributes[.paragraphStyle] as? NSMutableParagraphStyle ?? NSMutableParagraphStyle()
 		if lineProperties.alignment != .left {
 			paragraphStyle.alignment = lineProperties.alignment
@@ -560,7 +562,8 @@ extension SwiftyMarkdown {
         attributes[.paragraphStyle] = paragraphStyle
 
 		for token in finalTokens {
-			attributes[.font] = self.font(for: line)
+            let font = self.font(for: line)
+			attributes[.font] = font
 			attributes[.link] = nil
 			attributes[.strikethroughStyle] = nil
 			attributes[.foregroundColor] = self.color(for: line)
@@ -576,40 +579,53 @@ extension SwiftyMarkdown {
 				attributes[.font] = self.font(for: line, characterOverride: .bold)
 				attributes[.foregroundColor] = self.bold.color
 			}
-			
+
             if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
                 attributes[.foregroundColor] = self.link.color
                 attributes[.font] = self.font(for: line, characterOverride: .link)
                 attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
-                
+
                 if underlineLinks {
                     attributes[.underlineStyle] = self.link.underlineStyle.rawValue as AnyObject
                     attributes[.underlineColor] = self.link.underlineColor
                 }
             }
-						
+
 			if styles.contains(.strikethrough) {
 				attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
 				attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue as AnyObject
 				attributes[.foregroundColor] = self.strikethrough.color
 			}
-			
+
 			#if !os(watchOS)
 			if let imgIdx = styles.firstIndex(of: .image), imgIdx < token.metadataStrings.count {
 				if !self.applyAttachments {
 					continue
 				}
 				#if !os(macOS)
-				let image1Attachment = NSTextAttachment()
+				let image1Attachment = WTNSTextAttachment()
+                image1Attachment.tagExtra = "gif"
                 let imageName = token.metadataStrings[imgIdx]
 
                 if let image = UIImage(contentsOfFile: imageName) {
+                    var imageModel = MardDownImageModel()
+                    imageModel.width = image.size.width
+                    imageModel.height = image.size.height
+                    imageModel.path = imageName
+                    image1Attachment.imageModel = imageModel
                     image1Attachment.image = image
                 } else if let image = UIImage(named: imageName) {
+                    var imageModel = MardDownImageModel()
+                    imageModel.width = image.size.width
+                    imageModel.height = image.size.height
+                    imageModel.path = imageName
+                    image1Attachment.imageModel = imageModel
                     image1Attachment.image = image
                 } else {
                     if let imageModel = blockImageUrl?(imageName) {
-                        image1Attachment.image = UIImage(named: imageModel.path)
+                        image1Attachment.imageModel = imageModel
+                        var tempImage = UIImage.markdownImageWithColor(size: CGSize(width: imageModel.width, height: imageModel.height))
+                        image1Attachment.image = tempImage
                         if imageModel.width != 0 && imageModel.height != 0 {
                             image1Attachment.bounds = CGRect(x: 0, y: 0, width: imageModel.width, height: imageModel.height)
                         }
@@ -630,16 +646,45 @@ extension SwiftyMarkdown {
 				continue
 			}
 			#endif
-			
+
 			if styles.contains(.code) {
 				attributes[.foregroundColor] = self.code.color
 				attributes[.font] = self.font(for: line, characterOverride: .code)
 			} else {
 				// Switch back to previous font
 			}
-			let str = NSAttributedString(string: token.outputString, attributes: attributes)
+
+            var contentString = token.outputString
+
+            if addLine {
+                contentString += "\n"
+            }
+
+			let str = NSAttributedString(string: contentString, attributes: attributes)
 			finalAttributedString.append(str)
 		}
 		return finalAttributedString
 	}
+}
+
+public class WTNSTextAttachment: NSTextAttachment {
+    public var tagExtra: String = ""
+    public var imageModel: MardDownImageModel?
+}
+
+extension UIImage {
+    class func markdownImageWithColor(size: CGSize, radius: CGFloat = 0) -> UIImage {
+        let rect = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+        UIGraphicsBeginImageContextWithOptions(rect.size, false, UIScreen.main.scale)
+        let context = UIGraphicsGetCurrentContext()
+        context?.setFillColor(UIColor.clear.cgColor)
+        let path = UIBezierPath.init(roundedRect: rect, cornerRadius: radius)
+        context?.addPath(path.cgPath)
+        context?.closePath()
+        context?.clip()
+        context?.fill(rect)
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return image!
+    }
 }

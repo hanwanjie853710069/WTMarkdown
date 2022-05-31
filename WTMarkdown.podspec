@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'WTMarkdown'
-  s.version          = '0.2.0'
+  s.version          = '0.3.0'
   s.summary          = 'Converts Markdown to NSAttributed String.'
   s.homepage         = 'https://github.com/hanwanjie853710069/WTMarkdown'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }

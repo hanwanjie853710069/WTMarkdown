@@ -105,6 +105,7 @@ extension SwiftyMarkdown {
 		}
 		
 		fontSize = fontSize == 0.0 ? nil : fontSize
+
 		var font: UIFont
 		if let existentFontName = fontName {
 			font = UIFont.preferredFont(forTextStyle: textStyle)

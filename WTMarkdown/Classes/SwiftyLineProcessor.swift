@@ -156,6 +156,9 @@ public class SwiftyLineProcessor {
         
 		for element in previousLines {
 			let output = (element.shouldTrim) ? text.trimmingCharacters(in: .whitespaces) : text
+            if output.isEmpty {
+                continue
+            }
 			let charSet = CharacterSet(charactersIn: element.token )
 			if output.unicodeScalars.allSatisfy({ charSet.contains($0) }) {
 				return SwiftyLine(line: "", lineStyle: element.type)
@@ -224,7 +227,8 @@ public class SwiftyLineProcessor {
             if let existentPrevious = input.lineStyle.styleIfFoundStyleAffectsPreviousLine(), foundAttributes.count > 0 {
                 if let idx = foundAttributes.firstIndex(of: foundAttributes.last!) {
                     let updatedPrevious = foundAttributes.last!
-                    foundAttributes[idx] = SwiftyLine(line: updatedPrevious.line, lineStyle: existentPrevious)
+                    let tempLine = SwiftyLine(line: updatedPrevious.line, lineStyle: existentPrevious)
+                    foundAttributes[idx] = tempLine
                 }
                 continue
             }
